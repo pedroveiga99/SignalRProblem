@@ -1,0 +1,55 @@
+﻿@page "/"
+
+@inject NavigationManager navmanager
+@using Microsoft.AspNetCore.SignalR.Client
+@implements IAsyncDisposable
+
+<PageTitle>Index</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<SurveyPrompt Title="How is Blazor working for you?" />
+
+<h1>
+    Notif Value: @notifValue
+</h1>
+
+@code{
+    HubConnection hubConnection;
+    bool notifValue = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(navmanager.ToAbsoluteUri("/ws/notifications"))
+            .WithAutomaticReconnect(new RetryPolicyLoop())
+            .Build();
+
+        hubConnection.On<bool>("SystemNotification", (notifVal) =>
+        {
+            notifValue = notifVal;
+            StateHasChanged();
+            Console.WriteLine(notifValue);
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    private class RetryPolicyLoop : IRetryPolicy
+    {
+        private const int ReconnectionWaitSeconds = 1;
+
+        public TimeSpan? NextRetryDelay(RetryContext retryContext)
+        {
+            return TimeSpan.FromSeconds(ReconnectionWaitSeconds);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await hubConnection.StopAsync();
+        await hubConnection.DisposeAsync();
+    }
+}
