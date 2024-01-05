@@ -7,6 +7,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
+builder.Logging.AddConsole(options =>
+{
+    options.TimestampFormat = "HH:mm:ss ";
+});
+
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<Notifmanager>();
 builder.Services.AddSingleton<NotificationHandler>();
